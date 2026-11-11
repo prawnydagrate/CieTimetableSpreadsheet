@@ -118,7 +118,6 @@ def extract_from_test_date_windows(pdf: "PDF", page: int) -> list[dict[str, str 
             # build and save the record
             record = {
                 RecordFields.NAME: clean(name),
-                # other side is already stripped by stripping raw_code
                 RecordFields.SYL: clean(syl),
                 RecordFields.COMP: clean(comp),
                 RecordFields.DATE: date,
