@@ -60,7 +60,7 @@ def extract_from_syllabus_view(pdf: "PDF", page: int) -> list[dict[str, str | da
         for row in df.itertuples():
             if any(isinstance(cell, str) and not cell.strip() or
                    # accounts for NaN too, since (NaN > 0) == False
-                   # however, note that this isn't needed since NaN has been filled with None
+                   # however, note that this isn't needed since NaN has been filled with NULL
                    isinstance(cell, int | float) and not (cell > 0 and cell % 1 == 0) or
                    cell == NULL or cell is None for cell in row):
                 assert any(tuple(row)[1:] == acceptable_null_row
@@ -98,7 +98,7 @@ def extract_from_test_date_windows(pdf: "PDF", page: int) -> list[dict[str, str 
         for row in df.itertuples():
             if any(isinstance(cell, str) and not cell.strip() or
                    # accounts for NaN too, since (NaN > 0) == False
-                   # however, note that this isn't needed since NaN has been filled with None
+                   # however, note that this isn't needed since NaN has been filled with NULL
                    isinstance(cell, int | float) and not (cell > 0 and cell % 1 == 0) or
                    cell == NULL or cell is None for cell in row):
                 assert any(tuple(row)[1:] == acceptable_null
