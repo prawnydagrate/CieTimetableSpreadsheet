@@ -64,7 +64,7 @@ def extract_from_syllabus_view(pdf: "PDF", page: int) -> list[dict[str, str | da
                    isinstance(cell, int | float) and not (cell > 0 and cell % 1 == 0) or
                    cell == NULL or cell is None for cell in row):
                 assert any(tuple(row)[1:] == acceptable_null_row
-                           for acceptable_null_row in ACCEPTABLE_NULL_ROWS), "Unacceptable null row found: " + repr(row)
+                           for acceptable_null_row in ACCEPTABLE_NULL_ROWS), f"unacceptable null row found on page {page}: {row}"
                 # if at this point, it is an acceptable null
                 # continue to discard the row
                 continue
@@ -102,7 +102,7 @@ def extract_from_test_date_windows(pdf: "PDF", page: int) -> list[dict[str, str 
                    isinstance(cell, int | float) and not (cell > 0 and cell % 1 == 0) or
                    cell == NULL or cell is None for cell in row):
                 assert any(tuple(row)[1:] == acceptable_null
-                           for acceptable_null in ACCEPTABLE_NULL_ROWS), "unacceptable null row found: " + repr(row)
+                           for acceptable_null in ACCEPTABLE_NULL_ROWS), f"unacceptable null row found on page {page}: {row}"
                 # if at this point, it is an acceptable null
                 # continue to discard the row
                 continue
