@@ -51,7 +51,16 @@
 {#if selectedExams.length === 0}
 	You haven't selected any exams yet 🤨
 {:else}
-	You've selected {selectedExams.length} exam{selectedExams.length === 1 ? '' : 's'}:
+	{#if selectedExams.length === 1}
+		You've selected 1 exam:
+	{:else}
+		{@const nUnique = new Set(selectedExams.map(({ syllabus }) => syllabus)).size}
+		{#if nUnique === 1}
+			You've selected {selectedExams.length} exams in {selectedExams[0].syllabus}:
+		{:else}
+			You've selected {selectedExams.length} exams across {nUnique} courses:
+		{/if}
+	{/if}
 	<div id="selected-exams-display-div">
 		{#each selectedExams as { name, syllabus, component }}
 			<div class="exam-row">
