@@ -3,12 +3,17 @@ import { seriesToFloat } from '#lib/assets/helpers.js';
 import Papa from 'papaparse';
 
 export async function load({ fetch }) {
-	// find all files inside /static
-	const modules = import.meta.glob('/static/*');
-	// remove "/static"" prefix and filter only CSVs
-	const timetableFiles = Object.keys(modules)
-		.map((path) => path.replace(/^\/static/, ''))
-		.filter((path) => path.endsWith('.csv'));
+	const timetableFiles = [
+		// TODO: work smarter
+		'/J_2027_0.csv',
+		'/J_2027_1.csv',
+		'/J_2027_2.csv',
+		'/J_2027_3.csv',
+		'/J_2027_4.csv',
+		'/M_2027_4.csv',
+		'/J_2027_5.csv',
+		'/J_2027_6.csv'
+	];
 	const allSeries = {}; // maps each zone to its series
 	const recordsByZone = {}; // maps each series to its exam date records
 	const seriesExtremesByZone = {}; // maps each series to its earliest and latest date
