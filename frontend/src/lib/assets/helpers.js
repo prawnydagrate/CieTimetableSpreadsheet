@@ -87,7 +87,7 @@ const actionMultipleCells = (sheet, rangeStart, rangeEnd, callback) => {
 		for (let row = startRow; row <= endRow; row++) callback(sheet.getRow(row).getCell(col));
 };
 
-export const generateSpreadsheet = async (selectedExams, [earliest, latest]) => {
+export const generateSpreadsheet = async (selectedExams, [earliest, latest], filename) => {
 	// sort all exams
 	selectedExams.sort((a, b) => {
 		let cmp = 0;
@@ -290,9 +290,9 @@ export const generateSpreadsheet = async (selectedExams, [earliest, latest]) => 
 	const url = URL.createObjectURL(blob);
 	const anchor = document.createElement('a');
 	anchor.href = url;
-	anchor.download = 'timetable.xlsx';
+	anchor.download = filename;
 	anchor.click();
 	URL.revokeObjectURL(url);
 };
 
-export default { seriesToFloat, floatToSeries, matchRecord };
+export default { seriesToFloat, floatToSeries, matchRecord, isSameDate, generateSpreadsheet };

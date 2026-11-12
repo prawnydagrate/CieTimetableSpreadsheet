@@ -1,8 +1,8 @@
 <script>
 	import { LETTER_TO_SERIES, ZONES } from '#lib/assets/globals.js';
-	import { floatToSeries, seriesToFloat } from '#lib/assets/helpers.js';
+	import { floatToSeries } from '#lib/assets/helpers.js';
 	import ExamsSelector from '#lib/assets/ExamsSelector.svelte';
-	import { createSpreadsheet } from '../lib/assets/helpers.js';
+	import { generateSpreadsheet } from '../lib/assets/helpers.js';
 
 	const { data } = $props();
 	const { allSeries, recordsByZone, seriesExtremesByZone } = data;
@@ -49,11 +49,34 @@
 {/if}
 <br />
 {#if selectedExams.length > 0}
+	After you download the spreadsheet, <strong>be sure</strong> to verify the dates with the official
+	timetable on Cambridge's website.<br />
 	<button
-		onclick={() =>
-			createSpreadsheet(
+		id="generate-button"
+		onclick={() => {
+			const [seriesLetter, year] = floatToSeries(selectedSeriesFloat);
+			generateSpreadsheet(
 				[...selectedExams],
-				seriesExtremesByZone[selectedZone][selectedSeriesFloat]
-			)}>Generate spreadsheet!</button
+				seriesExtremesByZone[selectedZone][selectedSeriesFloat],
+				`${LETTER_TO_SERIES[seriesLetter].short}_${year}_Timetable.xlsx`
+			);
+		}}>Generate spreadsheet!</button
 	>
 {/if}
+
+<style>
+	#generate-button {
+		border: 1px solid #ddd;
+		border-radius: 8px;
+
+		margin: 8px 0 0 0;
+		padding: 8px;
+
+		background-color: white;
+		transition-duration: 100ms;
+	}
+
+	#generate-button:hover {
+		background-color: whitesmoke;
+	}
+</style>
