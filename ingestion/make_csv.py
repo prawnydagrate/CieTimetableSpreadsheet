@@ -44,6 +44,7 @@ class RecordFields:
     NAME = "name"
     SYL = "syllabus"
     COMP = "component"
+    DUR = "duration"
     DATE = "date"
     DATE_TO = "dateto"
     SESSION = "session"
@@ -79,6 +80,7 @@ def extract_from_syllabus_view(pdf: "PDF", page: int) -> list[dict[str, str | da
                 RecordFields.NAME: clean(name),
                 RecordFields.SYL: clean(syl),
                 RecordFields.COMP: clean(comp),
+                RecordFields.DUR: clean(dur),
                 RecordFields.DATE: date,
                 RecordFields.DATE_TO: None,
                 RecordFields.SESSION: clean(session),
@@ -120,6 +122,7 @@ def extract_from_test_date_windows(pdf: "PDF", page: int) -> list[dict[str, str 
                 RecordFields.NAME: clean(name),
                 RecordFields.SYL: clean(syl),
                 RecordFields.COMP: clean(comp),
+                RecordFields.DUR: "",
                 RecordFields.DATE: date,
                 RecordFields.DATE_TO: date_to,
                 RecordFields.SESSION: None,
