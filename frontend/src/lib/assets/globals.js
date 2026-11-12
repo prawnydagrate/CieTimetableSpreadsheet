@@ -16,7 +16,7 @@ export const SERIES_TO_LETTER = {
 	'O/N': 'N'
 };
 
-export const ZONES = [1, 2, 3, 4, 5, 6];
+export const ZONES = [0, 1, 2, 3, 4, 5, 6];
 
 export const SEARCH_REPLACEMENTS = {
 	mat: ' mat', // takes care of both math and fmath due to the space

@@ -29,7 +29,8 @@
 		<option value={zone}>Zone {zone}</option>
 	{/each}
 </select>
-&emsp;If you're in Romania looking for the March series, select <strong>Zone 4</strong>.
+&emsp;If you're in the UK, select <strong>Zone 0</strong>. If you're in Romania looking for the
+March series, select <strong>Zone 4</strong>.
 <br /><br />
 {#if selectedZone != null && allSeries[selectedZone].length === 0}
 	No timetables for this zone 😂😂
