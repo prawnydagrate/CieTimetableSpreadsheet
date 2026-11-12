@@ -6,7 +6,7 @@
 
 	const { data } = $props();
 	const { allSeries, recordsByZone, seriesExtremesByZone } = data;
-	let selectedZone = $state(4); // TODO: null
+	let selectedZone = $state(null);
 	let selectedSeriesFloat = $derived(
 		// selected series resets to null every time the zone is nulled
 		selectedZone == null || allSeries[selectedZone].length === 0 ? null : null
