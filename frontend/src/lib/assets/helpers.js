@@ -53,27 +53,16 @@ export const isSameDate = (date1, date2) =>
 	date1.getMonth() === date2.getMonth() &&
 	date1.getDate() === date2.getDate();
 
-const alignRow = (sheet, rowNum) => {
-	sheet.getCell(`A${rowNum}`).alignment = { horizontal: 'center' }; // date
-	sheet.getCell(`B${rowNum}`).alignment = { horizontal: 'left' }; // name
-	sheet.getCell(`C${rowNum}`).alignment = { horizontal: 'center' }; // syllabus
-	sheet.getCell(`D${rowNum}`).alignment = { horizontal: 'center' }; // component
-	sheet.getCell(`E${rowNum}`).alignment = { horizontal: 'center' }; // duration
-	sheet.getCell(`F${rowNum}`).alignment = { horizontal: 'center' }; // session
-	sheet.getCell(`G${rowNum}`).alignment = { horizontal: 'center' }; // days remaining
+const alignColumns = (sheet, columns, alignment) => {
+	for (const colKey of columns) {
+		const column = sheet.getColumn(colKey);
+		column.alignment = { ...(column.alignment || {}), alignment };
+	}
 };
 
-const alignWindowRow = (sheet, rowNum) => {
-	sheet.getCell(`I${rowNum}`).alignment = { horizontal: 'left' }; // name
-	sheet.getCell(`J${rowNum}`).alignment = { horizontal: 'center' }; // syllabus
-	sheet.getCell(`K${rowNum}`).alignment = { horizontal: 'center' }; // component
-	sheet.getCell(`L${rowNum}`).alignment = { horizontal: 'center' }; // start date
-	sheet.getCell(`M${rowNum}`).alignment = { horizontal: 'center' }; // deadline
-};
-
-const addDaysToCell = (sheet, rowNum) => {
-	const timeToCell = sheet.getCell(`G${rowNum}`);
-	timeToCell.value = { formula: `A${rowNum} - NOW()` };
+const addDaysToCell = (sheet, dateColumn, daysRemColumn, rowNum) => {
+	const timeToCell = sheet.getCell(`${daysRemColumn}${rowNum}`);
+	timeToCell.value = { formula: `$${dateColumn}${rowNum}-NOW()` };
 	timeToCell.numFmt = '0'; // round to nearest int
 };
 
@@ -87,7 +76,12 @@ const actionMultipleCells = (sheet, rangeStart, rangeEnd, callback) => {
 		for (let row = startRow; row <= endRow; row++) callback(sheet.getRow(row).getCell(col));
 };
 
-export const generateSpreadsheet = async (selectedExams, [earliest, latest], filename) => {
+export const generateSpreadsheet = async (
+	selectedExams,
+	[earliest, latest],
+	filename,
+	includeTimeColumn = false
+) => {
 	// sort all exams
 	selectedExams.sort((a, b) => {
 		let cmp = 0;
@@ -129,19 +123,27 @@ export const generateSpreadsheet = async (selectedExams, [earliest, latest], fil
 	const workbook = new ExcelJS.Workbook();
 	workbook.creator = 'Pranav Balaji Pooruli';
 	const sheet = workbook.addWorksheet('Timetable');
+	const dateColumn = 'A';
+	const nameColumn = 'B';
+	const sylColumn = 'C';
+	const compColumn = 'D';
+	const durColumn = 'E';
+	const sessionColumn = 'F';
+	const timeColumn = includeTimeColumn ? 'G' : null;
+	const daysRemColumn = includeTimeColumn ? 'H' : 'G';
 	sheet.columns = [
 		{ header: 'Date', key: 'date', width: 16, style: { numFmt: 'ddd, mmm dd' } },
 		// Co-ordinated Sciences (Double Award) (Multiple Choice - Extended) is 65 chars
 		// TODO: dynamically set widths
-		{ header: 'Name', key: 'name', width: 67 },
-		{ header: 'Syllabus', key: 'syllabus', width: 10, style: { numFmt: '@' } },
-		{ header: 'Component', key: 'component', width: 12, style: { numFmt: '@' } },
-		{ header: 'Duration', key: 'duration', width: 10 },
-		{ header: 'Session', key: 'session', width: 10 },
-		{ header: 'Days remaining', width: 16 }
+		{ header: 'Name', key: 'name', width: 69 },
+		{ header: 'Syllabus', key: 'syllabus', width: 12, style: { numFmt: '@' } },
+		{ header: 'Component', key: 'component', width: 14, style: { numFmt: '@' } },
+		{ header: 'Duration', key: 'duration', width: 12 },
+		{ header: 'Session', key: 'session', width: 12 },
+		...(includeTimeColumn ? [{ header: 'Time', width: 8 }] : []),
+		{ header: 'Days remaining', width: 18 }
 	];
 	let rowNum = 1; // always points to the last populated row, hence we increment then insert
-	alignRow(sheet, rowNum); // align the first row cells
 	sheet.getRow(1).font = { bold: true };
 	for (const thisDate of allDates) {
 		const currentDateSingles = singleDayExamsByDate[thisDate];
@@ -149,8 +151,7 @@ export const generateSpreadsheet = async (selectedExams, [earliest, latest], fil
 			rowNum++;
 			// no exams, so empty row
 			sheet.addRow({ date: thisDate });
-			addDaysToCell(sheet, rowNum);
-			alignRow(sheet, rowNum);
+			addDaysToCell(sheet, dateColumn, daysRemColumn, rowNum);
 		} else if (currentDateSingles.length > 1) {
 			// multiple exams this day
 			// keep track of the first cell to merge
@@ -159,24 +160,22 @@ export const generateSpreadsheet = async (selectedExams, [earliest, latest], fil
 			for (const currentDateSingle of currentDateSingles) {
 				rowNum++;
 				sheet.addRow({ ...currentDateSingle, date: new Date(currentDateSingle.date) });
-				addDaysToCell(sheet, rowNum);
-				alignRow(sheet, rowNum); // align this row's cells
+				addDaysToCell(sheet, dateColumn, daysRemColumn, rowNum);
 			}
 			// merge cells for the date and for the days remaining
-			sheet.mergeCells(`A${startRow}:A${rowNum}`);
-			sheet.mergeCells(`G${startRow}:G${rowNum}`);
+			sheet.mergeCells(`${dateColumn}${startRow}:${dateColumn}${rowNum}`);
+			sheet.mergeCells(`${daysRemColumn}${startRow}:${daysRemColumn}${rowNum}`);
 		} else {
 			rowNum++;
 			// single exam this day
 			const currentDateSingle = currentDateSingles[0];
 			sheet.addRow({ ...currentDateSingle, date: new Date(currentDateSingle.date) });
-			addDaysToCell(sheet, rowNum);
-			alignRow(sheet, rowNum);
+			addDaysToCell(sheet, dateColumn, daysRemColumn, rowNum);
 		}
 	}
 	// conditional formatting to gray out holidays and yellow-highlight exam days
 	sheet.addConditionalFormatting({
-		ref: `B2:F${rowNum}`,
+		ref: `B2:${timeColumn || sessionColumn}${rowNum}`,
 		rules: [
 			{
 				type: 'expression',
@@ -197,7 +196,7 @@ export const generateSpreadsheet = async (selectedExams, [earliest, latest], fil
 	});
 	// conditional formatting for days remaining
 	sheet.addConditionalFormatting({
-		ref: `G2:G${rowNum}`,
+		ref: `${daysRemColumn}2:${daysRemColumn}${rowNum}`,
 		rules: [
 			{
 				type: 'cellIs',
@@ -224,7 +223,7 @@ export const generateSpreadsheet = async (selectedExams, [earliest, latest], fil
 	actionMultipleCells(
 		sheet,
 		'A1',
-		`G${rowNum}`,
+		`${daysRemColumn}${rowNum}`,
 		(cell) =>
 			(cell.border = {
 				top: eachBorder,
@@ -233,56 +232,72 @@ export const generateSpreadsheet = async (selectedExams, [earliest, latest], fil
 				left: eachBorder
 			})
 	);
+	const nameColumns = [nameColumn];
 	if (multiDayExams.length > 0) {
+		const [
+			multiDayNameColumn,
+			multiDaySylColumn,
+			multiDayCompColumn,
+			multiDayDateFromColumn,
+			multiDayDateToColumn
+		] = includeTimeColumn ? ['J', 'K', 'L', 'M', 'N'] : ['I', 'J', 'K', 'L', 'M'];
+		nameColumns.push(multiDayNameColumn);
 		// handle multi-day exams
-		sheet.getColumn('I').width = 67; // TODO dynamically assign
-		sheet.getCell('I1').value = 'Name';
-		sheet.getColumn('J').width = 10;
-		sheet.getCell('J1').value = 'Syllabus';
-		sheet.getColumn('K').width = 12;
-		sheet.getCell('K1').value = 'Component';
-		sheet.getColumn('L').width = 16;
-		sheet.getColumn('L').numFmt = 'ddd, mmm dd';
-		sheet.getColumn('M').width = 16;
-		sheet.getColumn('M').numFmt = 'ddd, mmm dd';
-		sheet.getCell('L1').value = 'Start date';
-		sheet.getCell('M1').value = 'End date';
+		sheet.getColumn(multiDayNameColumn).width = 69; // TODO dynamically assign
+		sheet.getCell(`${multiDayNameColumn}1`).value = 'Name';
+		sheet.getColumn(multiDaySylColumn).width = 12;
+		sheet.getCell(`${multiDaySylColumn}1`).value = 'Syllabus';
+		sheet.getColumn(multiDayCompColumn).width = 14;
+		sheet.getCell(`${multiDayCompColumn}1`).value = 'Component';
+		sheet.getColumn(multiDayDateFromColumn).width = 16;
+		sheet.getColumn(multiDayDateFromColumn).numFmt = 'ddd, mmm dd';
+		sheet.getColumn(multiDayDateToColumn).width = 16;
+		sheet.getColumn(multiDayDateToColumn).numFmt = 'ddd, mmm dd';
+		sheet.getCell(`${multiDayDateFromColumn}1`).value = 'Start date';
+		sheet.getCell(`${multiDayDateToColumn}1`).value = 'End date';
 		let windowRowNum = 1;
-		alignWindowRow(sheet, windowRowNum);
 		for (const multiDayExam of multiDayExams) {
 			windowRowNum++;
 			const { name, syllabus, component, date, dateto } = multiDayExam;
-			sheet.getCell(`I${windowRowNum}`).value = name;
-			sheet.getCell(`J${windowRowNum}`).value = syllabus;
-			sheet.getCell(`K${windowRowNum}`).value = component;
-			sheet.getCell(`L${windowRowNum}`).value = new Date(date);
-			sheet.getCell(`M${windowRowNum}`).value = new Date(dateto);
-			alignWindowRow(sheet, windowRowNum);
+			const row = sheet.getRow(windowRowNum);
+			row.getCell(multiDayNameColumn).value = name;
+			row.getCell(multiDaySylColumn).value = syllabus;
+			row.getCell(multiDayCompColumn).value = component;
+			row.getCell(multiDayDateFromColumn).value = new Date(date);
+			row.getCell(multiDayDateToColumn).value = new Date(dateto);
 		}
 		// add background colors and borders
-		actionMultipleCells(sheet, 'I1', `M${windowRowNum}`, (cell) => {
-			if (cell.row > 1)
-				cell.fill = {
-					...(cell.fill || {}),
-					type: 'pattern',
-					pattern: 'solid',
-					fgColor: { argb: 'FFFF00' }
+		actionMultipleCells(
+			sheet,
+			`${multiDayNameColumn}1`,
+			`${multiDayDateToColumn}${windowRowNum}`,
+			(cell) => {
+				if (cell.row > 1)
+					cell.fill = {
+						...(cell.fill || {}),
+						type: 'pattern',
+						pattern: 'solid',
+						fgColor: { argb: 'FFFF00' }
+					};
+				cell.border = {
+					top: eachBorder,
+					right: eachBorder,
+					bottom: eachBorder,
+					left: eachBorder
 				};
-			cell.border = {
-				top: eachBorder,
-				right: eachBorder,
-				bottom: eachBorder,
-				left: eachBorder
-			};
-		});
+			}
+		);
 	}
-	// vertically middle-align all cells and add Arial font
+	// center-align all cells and add Arial font
 	sheet.eachRow((row) =>
 		row.eachCell((cell) => {
-			cell.alignment = { ...(cell.alignment || {}), vertical: 'middle' };
+			cell.alignment = { ...(cell.alignment || {}), horizontal: 'center', vertical: 'middle' };
 			cell.font = { ...(cell.font || {}), name: 'Arial' };
 		})
 	);
+	// left-align names
+	alignColumns(sheet, nameColumns, { horizontal: 'left' });
+	// download the spreadsheet
 	const buffer = await workbook.xlsx.writeBuffer();
 	const blob = new Blob([buffer], {
 		type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

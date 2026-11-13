@@ -26,7 +26,7 @@
 </script>
 
 <label for="exam-search-input">Search and select all of your exams</label>&nbsp;
-<input id="exam-search-input" bind:value={searchValue} placeholder="search" />
+<input id="exam-search-input" bind:value={searchValue} placeholder="Search" />
 <br />
 {#if queriedRecords.length === 0}
 	<div style="margin: 4px 0 0 0">No exams matched your query 🥀</div>
@@ -89,6 +89,7 @@
 		overflow: auto;
 
 		border: 1px solid #ddd;
+		border-radius: 12px;
 		margin: 4px;
 		padding: 2px;
 	}
