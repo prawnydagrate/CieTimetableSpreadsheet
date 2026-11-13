@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import pdfplumber
 import pandas as pd
 import string
@@ -34,6 +36,11 @@ RE_SYLLABUS_VIEW = re.compile(
     r"Syllabus\s+view\s+\(A(\u2013|-)Z\)\s+(?P<page>\d{2})", re.IGNORECASE)
 RE_CI_A_LEVEL = re.compile(
     r"Cambridge\s+International\s+A\s+Level\s+(?P<page>\d{2})", re.IGNORECASE)
+# assuming this code will be irrelevant in the 22nd century
+RE_EXAM_SERIES = re.compile(
+    r"(?P<month>March|June|November)\s+(?P<year>20\d{2})")
+# the UK has its own "Zone 3 (UK)" for Cambridge examinations
+RE_ADM_ZONE = re.compile(r"Administrative\s+zone\s+(?P<zone>3\s+\(UK\)|[1-6])")
 
 # in case a URL must be loaded
 HEADERS_FILE = "headers.json"
@@ -141,11 +148,12 @@ def extract_from_pdf(pdf: "PDF", syllabus_view_pages: collections.abc.Iterable[i
     return records
 
 
-def process_pdf(path_or_fp: str | pathlib.Path | io.BufferedReader | io.BytesIO) -> list[dict[str, str | datetime.date | None]]:
+def process_pdf(path_or_fp: str | pathlib.Path | io.BufferedReader | io.BytesIO) -> tuple[str, int, int, dict[str, str | datetime.date | None]]:
     pdf = pdfplumber.open(path_or_fp)
-    # need to find page numbers from ToC, then call extract_from_pdf
+    # need to find page numbers from ToC
     coverpage = pdf.pages[0]
     all_text = coverpage.extract_text()
+    # re.search finds first match
     windows_match = re.search(RE_TEST_DATE_WINDOWS, all_text)
     windows_start = int(windows_match.groupdict()["page"])
     weekly_match = re.search(RE_WEEKLY_VIEW, all_text)
@@ -160,7 +168,14 @@ def process_pdf(path_or_fp: str | pathlib.Path | io.BufferedReader | io.BytesIO)
     syl_view_pages = range(syl_view_start, syl_view_end + 1)
     # start of weekly view is (end of test date windows) + 1
     window_pages = range(windows_start, weekly_start)
-    return extract_from_pdf(pdf, list(syl_view_pages), list(window_pages))
+    # need to find examination series and administrative zone
+    series_match = re.search(RE_EXAM_SERIES, all_text)
+    month, year = series_match.groupdict()["month"], int(
+        series_match.groupdict()["year"])
+    adm_zone_match = re.search(RE_ADM_ZONE, all_text)
+    raw_zone = adm_zone_match.groupdict()["zone"]
+    zone = 0 if "(UK)" in raw_zone else int(raw_zone)
+    return month, year, zone, extract_from_pdf(pdf, list(syl_view_pages), list(window_pages))
 
 
 def main():
@@ -168,7 +183,7 @@ def main():
     parser.add_argument(
         "file", help="a valid path to the PDF of the timetable, or a valid URL to it")
     parser.add_argument(
-        "output", help="the output file path at which to save the processed CSV file")
+        "output", help="the output file path at which to save the processed CSV file; curly braces may be used to dynamically insert the month, year, and administrative zone (where Zone 3 (UK) is written as Zone 0) e.g. '{month}_{year}_Zone{zone}.csv' may become 'March_2027_Zone4.csv' and '{m}{yy}.csv' may become 'J28.csv'")
     args = parser.parse_args()
     path_or_fp = args.file
     if args.file.startswith("http://") or args.file.startswith("https://"):
@@ -183,12 +198,14 @@ def main():
         print("received file")
         path_or_fp = io.BytesIO(response.content)
     print("processing PDF")
-    records = process_pdf(path_or_fp)
+    month, year, zone, records = process_pdf(path_or_fp)
     print("finished processing")
     df = pd.DataFrame(records)
     print("saving CSV")
-    df.to_csv(args.output, index=False)
-    print("saved")
+    filename = args.output.format(
+        month=month, mmmm=month, m=month[0], year=year, yyyy=year, yy=year % 100, zone=zone)
+    df.to_csv(filename, index=False)
+    print(f"saved at {filename}")
 
 
 if __name__ == "__main__":
