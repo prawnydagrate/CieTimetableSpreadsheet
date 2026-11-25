@@ -1,5 +1,5 @@
-import { ZONES } from '#lib/assets/globals.js';
-import { seriesToFloat } from '#lib/assets/helpers.js';
+import { ZONES } from '#lib/globals.js';
+import { seriesToFloat } from '#lib/helpers.js';
 import Papa from 'papaparse';
 
 export async function load({ fetch }) {

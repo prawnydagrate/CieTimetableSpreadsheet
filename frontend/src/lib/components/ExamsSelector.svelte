@@ -1,5 +1,5 @@
 <script>
-	import { matchRecord } from './helpers';
+	import { matchRecord } from '#lib/helpers.js';
 
 	let { selectedExams = $bindable(), recordsToQuery } = $props();
 	let searchValue = $state('');

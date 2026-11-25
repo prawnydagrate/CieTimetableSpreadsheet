@@ -1,6 +1,6 @@
 <script>
 	import favicon from '#lib/assets/favicon.png';
-	import Footer from '#lib/assets/Footer.svelte';
+	import Footer from '#lib/components/Footer.svelte';
 
 	let { children } = $props();
 </script>

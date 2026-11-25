@@ -1,8 +1,8 @@
 <script>
-	import { LETTER_TO_SERIES, ZONES } from '#lib/assets/globals.js';
-	import { floatToSeries } from '#lib/assets/helpers.js';
-	import ExamsSelector from '#lib/assets/ExamsSelector.svelte';
-	import { generateSpreadsheet } from '../lib/assets/helpers.js';
+	import { LETTER_TO_SERIES, ZONES } from '#lib/globals.js';
+	import { floatToSeries } from '#lib/helpers.js';
+	import ExamsSelector from '#lib/components/ExamsSelector.svelte';
+	import { generateSpreadsheet } from '#lib/helpers.js';
 
 	const { data } = $props();
 	const { allSeries, recordsByZone, seriesExtremesByZone } = data;
